@@ -4,13 +4,13 @@ import Exercise from '@/models/Exercise';
 
 export async function POST(request: Request) {
   try {
+    console.log('1. Iniziando la richiesta POST');
     await dbConnect();
+    console.log('2. Connesso al database');
+    
     const data = await request.json();
+    console.log('3. Dati ricevuti:', data);
     
-    // Log per debug
-    console.log('Dati ricevuti:', data);
-    
-    // Gestione sicura dei campi
     const safeData = {
       name: data.name?.trim() ?? '',
       description: data.description?.trim() ?? '',
@@ -23,20 +23,28 @@ export async function POST(request: Request) {
       imageUrl: data.imageUrl?.trim() ?? ''
     };
     
-    // Log per debug
-    console.log('Dati processati:', safeData);
+    console.log('4. Dati processati:', safeData);
 
     if (!safeData.name || !safeData.description || !safeData.muscleGroup || !safeData.equipment) {
+      console.log('5. Validazione fallita:', { safeData });
       return NextResponse.json(
         { error: 'Tutti i campi obbligatori devono essere compilati' },
         { status: 400 }
       );
     }
     
+    console.log('6. Tentativo di creazione esercizio');
     const exercise = await Exercise.create(safeData);
+    console.log('7. Esercizio creato:', exercise);
+    
     return NextResponse.json(exercise, { status: 201 });
   } catch (error: any) {
-    console.error('Errore dettagliato:', error);
+    console.error('ERRORE DETTAGLIATO:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      code: error.code
+    });
     return NextResponse.json(
       { 
         error: 'Errore durante il salvataggio dell\'esercizio',
