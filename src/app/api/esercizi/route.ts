@@ -51,10 +51,23 @@ export async function PUT(request: Request) {
     const data = await request.json();
     const { id, ...updateData } = data;
     
+    // Gestione sicura dei dati
+    const safeData = {
+      name: updateData.name ?? '',
+      description: updateData.description ?? '',
+      muscleGroup: updateData.muscleGroup ?? '',
+      equipment: updateData.equipment ?? '',
+      secondaryMuscles: Array.isArray(updateData.secondaryMuscles) 
+        ? updateData.secondaryMuscles 
+        : (updateData.secondaryMuscles ?? '').split(',').map((m: string) => m.trim()).filter(Boolean),
+      videoUrl: updateData.videoUrl ?? '',
+      imageUrl: updateData.imageUrl ?? ''
+    };
+    
     const exercise = await Exercise.findByIdAndUpdate(
       id,
-      updateData,
-      { new: true }
+      safeData,
+      { new: true, runValidators: true }
     );
     
     if (!exercise) {
@@ -66,8 +79,9 @@ export async function PUT(request: Request) {
     
     return NextResponse.json(exercise);
   } catch (error) {
+    console.error('Errore durante l\'aggiornamento:', error);
     return NextResponse.json(
-      { error: 'Errore durante l\'aggiornamento dell\'esercizio' },
+      { error: 'Errore durante l\'aggiornamento dell\'esercizio', details: error },
       { status: 500 }
     );
   }

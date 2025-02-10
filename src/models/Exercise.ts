@@ -24,6 +24,7 @@ const ExerciseSchema = new mongoose.Schema({
   secondaryMuscles: {
     type: [String],
     default: [],
+    set: (v: string[]) => v.map(m => m.trim()).filter(Boolean)
   },
   videoUrl: {
     type: String,

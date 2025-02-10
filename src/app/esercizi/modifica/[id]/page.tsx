@@ -70,13 +70,17 @@ export default function ModificaEsercizio({ params }: ModificaEsercizioProps) {
         body: JSON.stringify(dataToSend),
       });
 
-      if (!response.ok) throw new Error('Errore durante il salvataggio');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Errore durante il salvataggio');
+      }
 
       router.push('/esercizi');
       router.refresh();
     } catch (err) {
       console.error('Errore:', err);
-      setError('Errore durante il salvataggio delle modifiche');
+      setError(err instanceof Error ? err.message : 'Errore durante il salvataggio delle modifiche');
     }
   };
 
