@@ -7,7 +7,10 @@ import { useRouter } from 'next/navigation';
 interface Exercise {
   _id: string;
   name: string;
-  targetMuscle: string;
+  muscleGroup: string;
+  equipment: string;
+  description: string;
+  secondaryMuscles: string[];
   difficulty: string;
 }
 
@@ -48,7 +51,7 @@ export default function Esercizi() {
 
   const filteredExercises = exercises.filter(exercise =>
     exercise.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    exercise.targetMuscle.toLowerCase().includes(searchTerm.toLowerCase())
+    exercise.muscleGroup.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -93,9 +96,19 @@ export default function Esercizi() {
                 <h3 className="font-bold text-lg hover:text-blue-600">
                   {exercise.name}
                 </h3>
-                <p className="text-gray-600">Muscolo: {exercise.targetMuscle}</p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Muscolo:</span> {exercise.muscleGroup}
+                </p>
+                <p className="text-gray-600">
+                  <span className="font-medium">Attrezzatura:</span> {exercise.equipment}
+                </p>
+                {exercise.secondaryMuscles?.length > 0 && (
+                  <p className="text-gray-600">
+                    <span className="font-medium">Muscoli Secondari:</span> {exercise.secondaryMuscles.join(', ')}
+                  </p>
+                )}
                 <p className="text-sm text-gray-500 capitalize">
-                  Livello: {exercise.difficulty}
+                  <span className="font-medium">Livello:</span> {exercise.difficulty || 'Non specificato'}
                 </p>
               </div>
             </Link>
