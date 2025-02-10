@@ -15,7 +15,7 @@ export async function POST(request: Request) {
       equipment: data.equipment ?? '',
       secondaryMuscles: Array.isArray(data.secondaryMuscles) 
         ? data.secondaryMuscles 
-        : (data.secondaryMuscles ?? '').split(',').map(m => m.trim()).filter(Boolean),
+        : (data.secondaryMuscles ?? '').split(',').map((m: string) => m.trim()).filter(Boolean),
       videoUrl: data.videoUrl ?? '',
       imageUrl: data.imageUrl ?? ''
     };
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Errore durante il salvataggio:', error);
     return NextResponse.json(
-      { error: 'Errore durante il salvataggio dell\'esercizio' },
+      { error: 'Errore durante il salvataggio dell\'esercizio', details: error },
       { status: 500 }
     );
   }

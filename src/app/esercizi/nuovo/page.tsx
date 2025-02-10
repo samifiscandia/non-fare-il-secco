@@ -36,15 +36,17 @@ export default function NuovoEsercizio() {
         body: JSON.stringify(dataToSend),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Errore durante il salvataggio');
+        throw new Error(data.error || 'Errore durante il salvataggio');
       }
 
       router.push('/esercizi');
       router.refresh();
     } catch (err) {
       console.error('Errore:', err);
-      setError('Errore durante il salvataggio dell\'esercizio');
+      setError(err instanceof Error ? err.message : 'Errore durante il salvataggio dell\'esercizio');
     } finally {
       setIsSubmitting(false);
     }

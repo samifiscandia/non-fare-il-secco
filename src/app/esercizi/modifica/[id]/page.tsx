@@ -1,10 +1,13 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { use } from 'react';
 
-export default function ModificaEsercizio({ params }: { params: Promise<{ id: string }> }) {
+interface ModificaEsercizioProps {
+  readonly params: Promise<{ readonly id: string }>;
+}
+
+export default function ModificaEsercizio({ params }: ModificaEsercizioProps) {
   const resolvedParams = use(params);
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(true);
@@ -98,8 +101,9 @@ export default function ModificaEsercizio({ params }: { params: Promise<{ id: st
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-1">Nome Esercizio</label>
+          <label htmlFor="name" className="block mb-1">Nome Esercizio</label>
           <input
+            id="name"
             type="text"
             name="name"
             value={formData.name}
@@ -110,8 +114,9 @@ export default function ModificaEsercizio({ params }: { params: Promise<{ id: st
         </div>
 
         <div>
-          <label className="block mb-1">Muscolo Principale</label>
+          <label htmlFor="muscleGroup" className="block mb-1">Gruppo Muscolare</label>
           <input
+            id="muscleGroup"
             type="text"
             name="muscleGroup"
             value={formData.muscleGroup}
@@ -122,30 +127,22 @@ export default function ModificaEsercizio({ params }: { params: Promise<{ id: st
         </div>
 
         <div>
-          <label className="block mb-1">Muscoli Secondari (separati da virgola)</label>
+          <label htmlFor="equipment" className="block mb-1">Attrezzatura</label>
           <input
-            type="text"
-            name="secondaryMuscles"
-            value={formData.secondaryMuscles}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Attrezzatura Necessaria (separata da virgola)</label>
-          <input
+            id="equipment"
             type="text"
             name="equipment"
             value={formData.equipment}
             onChange={handleChange}
             className="w-full p-2 border rounded"
+            required
           />
         </div>
 
         <div>
-          <label className="block mb-1">Descrizione</label>
+          <label htmlFor="description" className="block mb-1">Descrizione</label>
           <textarea
+            id="description"
             name="description"
             value={formData.description}
             onChange={handleChange}
@@ -156,8 +153,21 @@ export default function ModificaEsercizio({ params }: { params: Promise<{ id: st
         </div>
 
         <div>
-          <label className="block mb-1">URL Video (opzionale)</label>
+          <label htmlFor="secondaryMuscles" className="block mb-1">Muscoli Secondari</label>
           <input
+            id="secondaryMuscles"
+            type="text"
+            name="secondaryMuscles"
+            value={formData.secondaryMuscles}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="videoUrl" className="block mb-1">URL Video (opzionale)</label>
+          <input
+            id="videoUrl"
             type="url"
             name="videoUrl"
             value={formData.videoUrl}
@@ -167,8 +177,9 @@ export default function ModificaEsercizio({ params }: { params: Promise<{ id: st
         </div>
 
         <div>
-          <label className="block mb-1">URL Immagine (opzionale)</label>
+          <label htmlFor="imageUrl" className="block mb-1">URL Immagine (opzionale)</label>
           <input
+            id="imageUrl"
             type="url"
             name="imageUrl"
             value={formData.imageUrl}

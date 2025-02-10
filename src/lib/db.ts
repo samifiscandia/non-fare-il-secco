@@ -30,11 +30,15 @@ async function dbConnect(): Promise<typeof mongoose> {
   if (!cached.promise) {
     const opts = {
       bufferCommands: false,
+      serverSelectionTimeoutMS: 5000, // Timeout dopo 5 secondi
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      cached.conn = mongoose;
+      console.log('Connesso al database MongoDB');
       return mongoose;
+    }).catch((error) => {
+      console.error('Errore di connessione al database:', error);
+      throw error;
     });
   }
 
@@ -44,6 +48,7 @@ async function dbConnect(): Promise<typeof mongoose> {
     return mongoose;
   } catch (e) {
     cached.promise = null;
+    console.error('Errore durante la connessione al database:', e);
     throw e;
   }
 }
