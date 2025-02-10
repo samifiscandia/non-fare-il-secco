@@ -7,25 +7,41 @@ export async function POST(request: Request) {
     await dbConnect();
     const data = await request.json();
     
+    // Log per debug
+    console.log('Dati ricevuti:', data);
+    
     // Gestione sicura dei campi
     const safeData = {
-      name: data.name ?? '',
-      description: data.description ?? '',
-      muscleGroup: data.muscleGroup ?? '',
-      equipment: data.equipment ?? '',
+      name: data.name?.trim() ?? '',
+      description: data.description?.trim() ?? '',
+      muscleGroup: data.muscleGroup?.trim() ?? '',
+      equipment: data.equipment?.trim() ?? '',
       secondaryMuscles: Array.isArray(data.secondaryMuscles) 
         ? data.secondaryMuscles 
         : (data.secondaryMuscles ?? '').split(',').map((m: string) => m.trim()).filter(Boolean),
-      videoUrl: data.videoUrl ?? '',
-      imageUrl: data.imageUrl ?? ''
+      videoUrl: data.videoUrl?.trim() ?? '',
+      imageUrl: data.imageUrl?.trim() ?? ''
     };
+    
+    // Log per debug
+    console.log('Dati processati:', safeData);
+
+    if (!safeData.name || !safeData.description || !safeData.muscleGroup || !safeData.equipment) {
+      return NextResponse.json(
+        { error: 'Tutti i campi obbligatori devono essere compilati' },
+        { status: 400 }
+      );
+    }
     
     const exercise = await Exercise.create(safeData);
     return NextResponse.json(exercise, { status: 201 });
-  } catch (error) {
-    console.error('Errore durante il salvataggio:', error);
+  } catch (error: any) {
+    console.error('Errore dettagliato:', error);
     return NextResponse.json(
-      { error: 'Errore durante il salvataggio dell\'esercizio', details: error },
+      { 
+        error: 'Errore durante il salvataggio dell\'esercizio',
+        details: error.message || 'Errore sconosciuto'
+      },
       { status: 500 }
     );
   }

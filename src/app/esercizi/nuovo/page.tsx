@@ -23,10 +23,16 @@ export default function NuovoEsercizio() {
     setError('');
 
     try {
+      // Log per debug
+      console.log('Dati form:', formData);
+
       const dataToSend = {
         ...formData,
         secondaryMuscles: formData.secondaryMuscles.split(',').map(m => m.trim()).filter(Boolean)
       };
+
+      // Log per debug
+      console.log('Dati da inviare:', dataToSend);
 
       const response = await fetch('/api/esercizi', {
         method: 'POST',
@@ -37,15 +43,16 @@ export default function NuovoEsercizio() {
       });
 
       const data = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(data.error || 'Errore durante il salvataggio');
+        console.error('Risposta non ok:', data);
+        throw new Error(data.error || data.details || 'Errore durante il salvataggio');
       }
 
       router.push('/esercizi');
       router.refresh();
     } catch (err) {
-      console.error('Errore:', err);
+      console.error('Errore completo:', err);
       setError(err instanceof Error ? err.message : 'Errore durante il salvataggio dell\'esercizio');
     } finally {
       setIsSubmitting(false);
