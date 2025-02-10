@@ -5,41 +5,52 @@ import Link from 'next/link';
 
 export default function NuovoEsercizio() {
   const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    targetMuscle: '',
-    secondaryMuscles: '',
-    equipment: '',
     description: '',
-    instructions: '',
-    difficulty: 'principiante',
-    mediaUrl: ''
+    muscleGroup: '',
+    equipment: '',
+    secondaryMuscles: '',
+    videoUrl: '',
+    imageUrl: ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
+    setError('');
+
     try {
+      const dataToSend = {
+        ...formData,
+        secondaryMuscles: formData.secondaryMuscles.split(',').map(m => m.trim()).filter(Boolean)
+      };
+
       const response = await fetch('/api/esercizi', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          secondaryMuscles: formData.secondaryMuscles.split(',').map(m => m.trim()),
-          equipment: formData.equipment.split(',').map(e => e.trim()),
-        }),
+        body: JSON.stringify(dataToSend),
       });
 
-      if (response.ok) {
-        router.push('/esercizi');
+      if (!response.ok) {
+        throw new Error('Errore durante il salvataggio');
       }
-    } catch (error) {
-      console.error('Errore durante il salvataggio:', error);
+
+      router.push('/esercizi');
+      router.refresh();
+    } catch (err) {
+      console.error('Errore:', err);
+      setError('Errore durante il salvataggio dell\'esercizio');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
@@ -47,13 +58,20 @@ export default function NuovoEsercizio() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Aggiungi Nuovo Esercizio</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Nuovo Esercizio</h1>
       
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block mb-1">Nome Esercizio</label>
+          <label htmlFor="name" className="block mb-1">Nome Esercizio</label>
           <input
+            id="name"
             type="text"
             name="name"
             value={formData.name}
@@ -64,11 +82,12 @@ export default function NuovoEsercizio() {
         </div>
 
         <div>
-          <label className="block mb-1">Muscolo Principale</label>
+          <label htmlFor="muscleGroup" className="block mb-1">Gruppo Muscolare</label>
           <input
+            id="muscleGroup"
             type="text"
-            name="targetMuscle"
-            value={formData.targetMuscle}
+            name="muscleGroup"
+            value={formData.muscleGroup}
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required
@@ -76,30 +95,22 @@ export default function NuovoEsercizio() {
         </div>
 
         <div>
-          <label className="block mb-1">Muscoli Secondari (separati da virgola)</label>
+          <label htmlFor="equipment" className="block mb-1">Attrezzatura</label>
           <input
-            type="text"
-            name="secondaryMuscles"
-            value={formData.secondaryMuscles}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          />
-        </div>
-
-        <div>
-          <label className="block mb-1">Attrezzatura Necessaria (separata da virgola)</label>
-          <input
+            id="equipment"
             type="text"
             name="equipment"
             value={formData.equipment}
             onChange={handleChange}
             className="w-full p-2 border rounded"
+            required
           />
         </div>
 
         <div>
-          <label className="block mb-1">Descrizione</label>
+          <label htmlFor="description" className="block mb-1">Descrizione</label>
           <textarea
+            id="description"
             name="description"
             value={formData.description}
             onChange={handleChange}
@@ -110,48 +121,50 @@ export default function NuovoEsercizio() {
         </div>
 
         <div>
-          <label className="block mb-1">Istruzioni</label>
-          <textarea
-            name="instructions"
-            value={formData.instructions}
+          <label htmlFor="secondaryMuscles" className="block mb-1">Muscoli Secondari</label>
+          <input
+            id="secondaryMuscles"
+            type="text"
+            name="secondaryMuscles"
+            value={formData.secondaryMuscles}
             onChange={handleChange}
             className="w-full p-2 border rounded"
-            rows={4}
-            required
           />
         </div>
 
         <div>
-          <label className="block mb-1">Difficoltà</label>
-          <select
-            name="difficulty"
-            value={formData.difficulty}
+          <label htmlFor="videoUrl" className="block mb-1">URL Video (opzionale)</label>
+          <input
+            id="videoUrl"
+            type="url"
+            name="videoUrl"
+            value={formData.videoUrl}
             onChange={handleChange}
             className="w-full p-2 border rounded"
-          >
-            <option value="principiante">Principiante</option>
-            <option value="intermedio">Intermedio</option>
-            <option value="avanzato">Avanzato</option>
-          </select>
+          />
         </div>
 
         <div>
-          <label className="block mb-1">URL Media (opzionale)</label>
+          <label htmlFor="imageUrl" className="block mb-1">URL Immagine (opzionale)</label>
           <input
+            id="imageUrl"
             type="url"
-            name="mediaUrl"
-            value={formData.mediaUrl}
+            name="imageUrl"
+            value={formData.imageUrl}
             onChange={handleChange}
             className="w-full p-2 border rounded"
           />
         </div>
 
         <div className="flex gap-4">
-          <button
-            type="submit"
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className={`bg-blue-500 text-white px-4 py-2 rounded ${
+              isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600'
+            }`}
           >
-            Salva Esercizio
+            {isSubmitting ? 'Salvataggio in corso...' : 'Salva Esercizio'}
           </button>
           <Link
             href="/esercizi"

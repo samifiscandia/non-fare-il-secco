@@ -4,57 +4,44 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { use } from 'react';
 
-interface Exercise {
-  _id: string;
-  name: string;
-  targetMuscle: string;
-  secondaryMuscles: string[];
-  equipment: string[];
-  description: string;
-  instructions: string;
-  difficulty: string;
-  mediaUrl?: string;
-}
-
-interface PageProps {
-  params: Promise<{ id: string }>;
-}
-
-export default function ModificaEsercizio({ params }: PageProps) {
+export default function ModificaEsercizio({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const router = useRouter();
-  const [exercise, setExercise] = useState<Exercise | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
-    targetMuscle: '',
-    secondaryMuscles: '',
-    equipment: '',
     description: '',
-    instructions: '',
-    difficulty: '',
-    mediaUrl: ''
+    muscleGroup: '',
+    equipment: '',
+    secondaryMuscles: '',
+    videoUrl: '',
+    imageUrl: ''
   });
 
   useEffect(() => {
     const fetchExercise = async () => {
       try {
         const response = await fetch(`/api/esercizi/${resolvedParams.id}`);
-        if (response.ok) {
-          const data = await response.json();
-          setExercise(data);
-          setFormData({
-            name: data.name,
-            targetMuscle: data.targetMuscle,
-            secondaryMuscles: data.secondaryMuscles.join(', '),
-            equipment: data.equipment.join(', '),
-            description: data.description,
-            instructions: data.instructions,
-            difficulty: data.difficulty,
-            mediaUrl: data.mediaUrl || ''
-          });
-        }
-      } catch (error) {
-        console.error('Errore durante il recupero dell\'esercizio:', error);
+        if (!response.ok) throw new Error('Esercizio non trovato');
+        
+        const exercise = await response.json();
+        setFormData({
+          name: exercise.name,
+          description: exercise.description,
+          muscleGroup: exercise.muscleGroup,
+          equipment: exercise.equipment,
+          secondaryMuscles: Array.isArray(exercise.secondaryMuscles) 
+            ? exercise.secondaryMuscles.join(', ')
+            : exercise.secondaryMuscles || '',
+          videoUrl: exercise.videoUrl || '',
+          imageUrl: exercise.imageUrl || ''
+        });
+      } catch (err) {
+        console.error('Errore:', err);
+        setError('Errore nel caricamento dell\'esercizio');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -63,42 +50,52 @@ export default function ModificaEsercizio({ params }: PageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     try {
-      const response = await fetch(`/api/esercizi/${resolvedParams.id}`, {
+      const dataToSend = {
+        id: resolvedParams.id,
+        ...formData,
+        secondaryMuscles: formData.secondaryMuscles.split(',').map(m => m.trim()).filter(Boolean)
+      };
+
+      const response = await fetch('/api/esercizi', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          secondaryMuscles: formData.secondaryMuscles.split(',').map(m => m.trim()),
-          equipment: formData.equipment.split(',').map(e => e.trim()),
-        }),
+        body: JSON.stringify(dataToSend),
       });
 
-      if (response.ok) {
-        router.push('/esercizi');
-      }
-    } catch (error) {
-      console.error('Errore durante l\'aggiornamento:', error);
+      if (!response.ok) throw new Error('Errore durante il salvataggio');
+
+      router.push('/esercizi');
+      router.refresh();
+    } catch (err) {
+      console.error('Errore:', err);
+      setError('Errore durante il salvataggio delle modifiche');
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
   };
 
-  if (!exercise) {
-    return <div className="p-4">Caricamento...</div>;
-  }
+  if (isLoading) return <div>Caricamento...</div>;
 
   return (
-    <div className="max-w-2xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Modifica Esercizio</h1>
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Modifica Esercizio</h1>
       
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block mb-1">Nome Esercizio</label>
@@ -116,8 +113,8 @@ export default function ModificaEsercizio({ params }: PageProps) {
           <label className="block mb-1">Muscolo Principale</label>
           <input
             type="text"
-            name="targetMuscle"
-            value={formData.targetMuscle}
+            name="muscleGroup"
+            value={formData.muscleGroup}
             onChange={handleChange}
             className="w-full p-2 border rounded"
             required
@@ -159,37 +156,22 @@ export default function ModificaEsercizio({ params }: PageProps) {
         </div>
 
         <div>
-          <label className="block mb-1">Istruzioni</label>
-          <textarea
-            name="instructions"
-            value={formData.instructions}
+          <label className="block mb-1">URL Video (opzionale)</label>
+          <input
+            type="url"
+            name="videoUrl"
+            value={formData.videoUrl}
             onChange={handleChange}
             className="w-full p-2 border rounded"
-            rows={4}
-            required
           />
         </div>
 
         <div>
-          <label className="block mb-1">Difficoltà</label>
-          <select
-            name="difficulty"
-            value={formData.difficulty}
-            onChange={handleChange}
-            className="w-full p-2 border rounded"
-          >
-            <option value="principiante">Principiante</option>
-            <option value="intermedio">Intermedio</option>
-            <option value="avanzato">Avanzato</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block mb-1">URL Media (opzionale)</label>
+          <label className="block mb-1">URL Immagine (opzionale)</label>
           <input
             type="url"
-            name="mediaUrl"
-            value={formData.mediaUrl}
+            name="imageUrl"
+            value={formData.imageUrl}
             onChange={handleChange}
             className="w-full p-2 border rounded"
           />

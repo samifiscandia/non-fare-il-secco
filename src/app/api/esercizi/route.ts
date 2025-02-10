@@ -1,16 +1,31 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Exercise from '@/models/ExerciseSchema';
+import Exercise from '@/models/Exercise';
 
 export async function POST(request: Request) {
   try {
     await dbConnect();
     const data = await request.json();
-    const exercise = await Exercise.create(data);
+    
+    // Gestione sicura dei campi
+    const safeData = {
+      name: data.name ?? '',
+      description: data.description ?? '',
+      muscleGroup: data.muscleGroup ?? '',
+      equipment: data.equipment ?? '',
+      secondaryMuscles: Array.isArray(data.secondaryMuscles) 
+        ? data.secondaryMuscles 
+        : (data.secondaryMuscles ?? '').split(',').map(m => m.trim()).filter(Boolean),
+      videoUrl: data.videoUrl ?? '',
+      imageUrl: data.imageUrl ?? ''
+    };
+    
+    const exercise = await Exercise.create(safeData);
     return NextResponse.json(exercise, { status: 201 });
   } catch (error) {
+    console.error('Errore durante il salvataggio:', error);
     return NextResponse.json(
-      { error: 'Errore durante la creazione dell\'esercizio' },
+      { error: 'Errore durante il salvataggio dell\'esercizio' },
       { status: 500 }
     );
   }
@@ -19,9 +34,10 @@ export async function POST(request: Request) {
 export async function GET() {
   try {
     await dbConnect();
-    const exercises = await Exercise.find({});
+    const exercises = await Exercise.find({}).lean();
     return NextResponse.json(exercises);
   } catch (error) {
+    console.error('Errore durante il recupero:', error);
     return NextResponse.json(
       { error: 'Errore durante il recupero degli esercizi' },
       { status: 500 }

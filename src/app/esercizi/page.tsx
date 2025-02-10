@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaPlus, FaSearch, FaPencilAlt, FaTrashAlt, FaHome } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 interface Exercise {
   _id: string;
@@ -13,35 +14,34 @@ interface Exercise {
 export default function Esercizi() {
   const [exercises, setExercises] = useState<Exercise[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
 
   useEffect(() => {
     fetchExercises();
   }, []);
 
   const fetchExercises = async () => {
-    try {
-      const response = await fetch('/api/esercizi');
-      if (response.ok) {
-        const data = await response.json();
-        setExercises(data);
-      }
-    } catch (error) {
-      console.error('Errore durante il recupero degli esercizi:', error);
-    }
+    const response = await fetch('/api/esercizi');
+    const data = await response.json();
+    setExercises(data);
   };
 
   const handleDelete = async (id: string) => {
     if (window.confirm('Sei sicuro di voler eliminare questo esercizio?')) {
       try {
-        const response = await fetch(`/api/esercizi/${id}`, {
+        const response = await fetch(`/api/esercizi?id=${id}`, {
           method: 'DELETE',
         });
-        
-        if (response.ok) {
-          await fetchExercises();
+
+        if (!response.ok) {
+          throw new Error('Errore durante l\'eliminazione');
         }
+
+        await fetchExercises();
+        router.refresh();
       } catch (error) {
-        console.error('Errore durante l\'eliminazione:', error);
+        console.error('Errore:', error);
+        alert('Errore durante l\'eliminazione dell\'esercizio');
       }
     }
   };

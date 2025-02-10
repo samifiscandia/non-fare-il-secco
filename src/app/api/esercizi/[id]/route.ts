@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/db';
-import Exercise from '@/models/ExerciseSchema';
+import Exercise from '@/models/Exercise';
 
 export async function GET(
   request: Request,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     await dbConnect();
-    const exercise = await Exercise.findById(params.id);
+    const exercise = await Exercise.findById(params.id).lean();
     
     if (!exercise) {
       return NextResponse.json(
@@ -16,9 +16,10 @@ export async function GET(
         { status: 404 }
       );
     }
-    
+
     return NextResponse.json(exercise);
   } catch (error) {
+    console.error('Errore:', error);
     return NextResponse.json(
       { error: 'Errore durante il recupero dell\'esercizio' },
       { status: 500 }
